@@ -294,11 +294,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c5a2e78a3beb4ac5fe61b2ee2ba7ce60a6f9ecd934c5e82294e9cb13f91e87b3"
+  digest = "1:3f9a45b5bd2875b645b3896c6ee820365641ab614b0b8a0333d37fc911e7fb61"
   name = "github.com/redhat-nfvpe/koko"
   packages = ["api"]
   pruneopts = "UT"
-  revision = "316238a5e3ec1a84ecdc0de1536d8ffdc40b903d"
+  revision = "73840f1b9fdc77468bb788017694ab57d44eb1a3"
 
 [[projects]]
   digest = "1:3f53e9e4dfbb664cd62940c9c4b65a2171c66acd0b7621a1a6b8e78513525a52"

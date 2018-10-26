@@ -279,8 +279,13 @@ func (veth *VEth) SetEgressMirror() (err error) {
 			veth.MirrorEgress, veth.NsName, err)
 	}
 
+	/*
 	if linkSrc.Attrs().TxQLen == 0 {
 		return fmt.Errorf("veth qlen must be non zero!")
+	}
+	*/
+	if err = netlink.LinkSetTxQLen(linkSrc, 1000); err != nil {
+		return fmt.Errorf("cannot set %s TxQLen: %v", veth.MirrorEgress, err)
 	}
 
 	if linkDest, err = netlink.LinkByName(veth.LinkName); err != nil {
@@ -505,6 +510,74 @@ func (veth *VEth) RemoveVethLink() (err error) {
 	})
 
 	return err
+}
+
+// GetEgressMTU get veth's EgressIF MTU
+func (veth *VEth) GetEgressMTU() (mtu int, err error) {
+	var linkSrc netlink.Link
+
+	if veth.MirrorEgress == "" {
+		return -1, fmt.Errorf("No EgressIF")
+	}
+
+	if linkSrc, err = netlink.LinkByName(veth.MirrorEgress); err != nil {
+		return -1, fmt.Errorf("failed to lookup %q in %q: %v", veth.MirrorEgress, veth.NsName, err)
+	}
+
+	return linkSrc.Attrs().MTU, nil
+}
+
+// SetEgressMTU set veth's EgressIF MTU
+func (veth *VEth) SetEgressMTU(mtu int) (err error) {
+	var linkSrc netlink.Link
+
+	if veth.MirrorEgress == "" {
+		return fmt.Errorf("No EgressIF")
+	}
+
+	if linkSrc, err = netlink.LinkByName(veth.MirrorEgress); err != nil {
+		return fmt.Errorf("failed to lookup %q in %q: %v", veth.MirrorEgress, veth.NsName, err)
+	}
+
+	if err = netlink.LinkSetMTU(linkSrc, mtu); err != nil {
+		return fmt.Errorf("failed to set MTU %q in %q: %v", veth.MirrorEgress, mtu, err)
+	}
+	return nil
+}
+
+// GetEgressTxQLen get veth's EgressIF TxQLen
+func (veth *VEth) GetEgressTxQLen() (qlen int, err error) {
+	var linkSrc netlink.Link
+
+	if veth.MirrorEgress == "" {
+		return -1, fmt.Errorf("No EgressIF")
+	}
+
+	if linkSrc, err = netlink.LinkByName(veth.MirrorEgress); err != nil {
+		return -1, fmt.Errorf("failed to lookup %q in %q: %v",
+			veth.MirrorEgress, veth.NsName, err)
+	}
+
+	return linkSrc.Attrs().TxQLen, nil
+}
+
+// SetEgressTxQLen set veth's EgressIF TxQLen
+func (veth *VEth) SetEgressTxQLen(qlen int) (err error) {
+	var linkSrc netlink.Link
+
+	if veth.MirrorEgress == "" {
+		return fmt.Errorf("No EgressIF")
+	}
+
+	if linkSrc, err = netlink.LinkByName(veth.MirrorEgress); err != nil {
+		return fmt.Errorf("failed to lookup %q in %q: %v",
+			veth.MirrorEgress, veth.NsName, err)
+	}
+
+	if err = netlink.LinkSetTxQLen(linkSrc, qlen); err != nil {
+		return fmt.Errorf("cannot set %s TxQLen: %v", veth.MirrorEgress, err)
+	}
+	return nil
 }
 
 // MakeVeth is top-level handler to create veth links given two VEth data

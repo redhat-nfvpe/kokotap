@@ -67,7 +67,7 @@ func parseSenderArgs(procPrefix string, args *SenderArgs) (*koko.VEth, *koko.VxL
 		if err != nil {
 			return nil, nil, err
 		}
-		args.VxlanEgressIf = egressif.Name	
+		args.VxlanEgressIf = egressif.Name
 	}
 
 	containerType := args.ContainerID[0:strings.Index(args.ContainerID, ":")]
@@ -116,7 +116,7 @@ func parseReceiverArgs(procPrefix string, args *ReceiverArgs) (*koko.VEth, *koko
 		if err != nil {
 			return nil, nil, err
 		}
-		args.VxlanEgressIf = egressif.Name	
+		args.VxlanEgressIf = egressif.Name
 	}
 
 	veth := koko.VEth{}
@@ -198,13 +198,32 @@ func main() {
 		done <- true
 	}()
 
+	egressMTU, err := veth.GetEgressMTU()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
+	}
+	egressTxQLen, err := veth.GetEgressTxQLen()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
+	}
 	err = koko.MakeVxLan(*veth, *vxlan)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
 		//bailout?
 	}
+
 	fmt.Println("Waiting for signal at main ...")
 	<-done
+
+	// Cleanup
+	err = veth.SetEgressMTU(egressMTU)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
+	}
+	err = veth.SetEgressTxQLen(egressTxQLen)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
+	}
 	err = veth.RemoveVethLink()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
