@@ -28,11 +28,17 @@ ignored = ["bytes"]
 
 [[constraint]]
   name = "github.com/redhat-nfvpe/koko"
-  version = "0.7"
+  branch = "master"
+  #version = "0.7"
+
+[[override]]
+  name = "github.com/docker/distribution"
+  branch = "master"
 
 [[override]]
   name = "github.com/docker/docker"
   branch = "master"
+  #version = "v17.05.0-ce"
 
 [[override]]
   name = "golang.org/x/sys"
@@ -45,3 +51,7 @@ ignored = ["bytes"]
 [prune]
   go-tests = true
   unused-packages = true
+
+[[override]]
+  branch = "master"
+  name = "k8s.io/api"
