@@ -28,9 +28,11 @@ type KokotapArgs struct {
 
 type KokotapPodArgs struct {
 	ContainerRuntime string
+	PodName string
 	VxlanID int
 	IFName string
 	Sender struct {
+		Node string
 		ContainerID string
 		MirrorType string
 		MirrorIF string
@@ -38,23 +40,30 @@ type KokotapPodArgs struct {
 		VxlanIP string
 	}
 	Receiver struct {
+		Node string
 		VxlanEgressIP string
 		VxlanIP string
 	}
 }
 
+func (podargs *KokotapPodArgs) GeneratePodName() (string, string) {
+	return fmt.Sprintf("kokotap-%s-sender", podargs.PodName),
+	fmt.Sprintf("kokotap-%s-receiver-%s", podargs.PodName, podargs.Receiver.Node)
+}
+
 func (podargs *KokotapPodArgs) GenerateDockerYaml() (string) {
+	senderPod, receiverPod := podargs.GeneratePodName()
 	kokoTapPodDockerTemplate := `
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: koko-sidecar-sender
+  name: %s
 spec:
   hostNetwork: true
-  nodeName: kube-node-2
+  nodeName: %s
   containers:
-    - name: koko-sidecar-sender
+    - name: %s
       image: docker.io/s1061123/kokotap:latest
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
@@ -78,12 +87,12 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: koko-sidecar-receiver
+  name: %s
 spec:
   hostNetwork: true
-  nodeName: kube-master
+  nodeName: %s
   containers:
-    - name: koko-sidecar-receiver
+    - name: %s
       image: docker.io/s1061123/kokotap:latest
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
@@ -91,24 +100,28 @@ spec:
       securityContext:
         privileged: true
 `
-	return fmt.Sprintf(kokoTapPodDockerTemplate, podargs.Sender.ContainerID,
+	return fmt.Sprintf(kokoTapPodDockerTemplate,
+		senderPod, podargs.Sender.Node, senderPod,
+		podargs.Sender.ContainerID,
 		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
 		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID,
+		receiverPod, podargs.Receiver.Node, receiverPod, 
 		podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
 }
 
 func (podargs *KokotapPodArgs) GenerateCrioYaml() (string) {
+	senderPod, receiverPod := podargs.GeneratePodName()
 	kokoTapPodCrioTemplate := `
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: koko-sidecar-sender
+  name: %s
 spec:
   hostNetwork: true
-  nodeName: kube-node-2
+  nodeName: %s
   containers:
-    - name: koko-sidecar-sender
+    - name: %s
       image: docker.io/s1061123/kokotap:latest
       command: ["/bin/kokotap"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
@@ -132,12 +145,12 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: koko-sidecar-receiver
+  name: %s
 spec:
   hostNetwork: true
-  nodeName: kube-master
+  nodeName: %s
   containers:
-    - name: koko-sidecar-receiver
+    - name: %s
       image: docker.io/s1061123/kokotap:latest
       command: ["/bin/kokotap"]
       args: ["--procprefix=/host", "mode", "receiver",
@@ -145,9 +158,12 @@ spec:
       securityContext:
         privileged: true
 `
-	return fmt.Sprintf(kokoTapPodCrioTemplate, podargs.Sender.ContainerID,
+	return fmt.Sprintf(kokoTapPodCrioTemplate,
+		senderPod, podargs.Sender.Node, senderPod,
+		podargs.Sender.ContainerID,
 		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
 		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID,
+		receiverPod, podargs.Receiver.Node, receiverPod,
 		podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
 }
 
@@ -155,7 +171,6 @@ func (podargs *KokotapPodArgs) ParseKokoTapArgs(args *KokotapArgs) error {
 	if args == nil {
 		return fmt.Errorf("Invalid args")
 	}
-
 
 	kubeClient, err := GetK8sClient(args.KubeConfig, nil)
 	if err != nil {
@@ -165,8 +180,10 @@ func (podargs *KokotapPodArgs) ParseKokoTapArgs(args *KokotapArgs) error {
 	if err != nil {
 		return fmt.Errorf("err:%v", err)
 	}
+	podargs.PodName = args.Pod
 	podargs.Sender.VxlanEgressIP = pod.Status.HostIP
 	podargs.Receiver.VxlanIP = pod.Status.HostIP
+	podargs.Sender.Node = pod.Spec.NodeName
 
 	isContainerFound := false
 	for _, val := range pod.Status.ContainerStatuses {
@@ -191,9 +208,10 @@ func (podargs *KokotapPodArgs) ParseKokoTapArgs(args *KokotapArgs) error {
         if err != nil {
 		return fmt.Errorf("err:%v", err)
         }
-	_, destIP := GetHostIP(&destNode.Status.Addresses)
+	destNodeName, destIP := GetHostIP(&destNode.Status.Addresses)
 	podargs.Receiver.VxlanEgressIP = destIP
 	podargs.Sender.VxlanIP = destIP
+	podargs.Receiver.Node = destNodeName
 
 	return nil
 }
@@ -206,11 +224,17 @@ func (args *KokotapArgs) fillOptionalArgs() {
 
 func main() {
 	var args KokotapArgs
+/*
 	a := kingpin.New(filepath.Base(os.Args[0]), "kokotap_pod")
 	a.Version(VERSION)
-
 	a.HelpFlag.Short('h')
+
 	k := a.Command("create", "create tap interface for kubernetes pod")
+*/
+	k := kingpin.New(filepath.Base(os.Args[0]), "kokotap")
+	k.Version(VERSION)
+	k.HelpFlag.Short('h')
+
 	k.Flag("pod", "tap target pod name").Required().StringVar(&args.Pod)
 	k.Flag("pod-ifname", "tap target interface name of pod (optional)").
 		Default("eth0").StringVar(&args.PodIFName)
@@ -227,11 +251,15 @@ func main() {
 	k.Flag("kubeconfig", "kubeconfig file path (optional)").
 		Envar("KUBECONFIG").StringVar(&args.KubeConfig)
 
+	kingpin.MustParse(k.Parse(os.Args[1:]))
+	args.fillOptionalArgs()
+/*
 	switch kingpin.MustParse(a.Parse(os.Args[1:])) {
 	case k.FullCommand():
 		args.fillOptionalArgs()
 		//fmt.Printf("args: %+v\n", args)
 	}
+*/
 
 	podArgs := KokotapPodArgs{}
 	err := podArgs.ParseKokoTapArgs(&args)
@@ -239,7 +267,6 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "err: %v\n", err)
 	}
-	//fmt.Printf("podArgs: %+v\n", podArgs)
 	
 	switch podArgs.ContainerRuntime {
 	case "docker":
