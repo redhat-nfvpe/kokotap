@@ -31,7 +31,7 @@ Flags:
       --pod-container=POD-CONTAINER  
                                  tap target container name (optional)
       --vxlan-id=VXLAN-ID        VxLAN ID to encap tap traffic
-      --mirrortype="all"         mirroring type {ingress|egress|all}
+      --mirrortype="both"         mirroring type {ingress|egress|both}
       --dest-node=DEST-NODE      kubernetes node for tap interface
       --dest-ifname=DEST-IFNAME  tap interface name
       --namespace="default"      namespace for pod/container (optional)
