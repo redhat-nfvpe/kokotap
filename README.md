@@ -38,11 +38,10 @@ Flags:
       --kubeconfig=KUBECONFIG    kubeconfig file path (optional)
 ```
 
-## Example1a - Create a mirror interface for Container 'centos-container' in Pod 'centos'
+## Example1 - Create a mirror interface for Container 'centos-container' in Pod 'centos'
 
 ```
-[centos@kube-master ~]$ ./kokotap --pod=centos --pod-container=centos-container
-    --mirrortype=both --dest-node=kube-master --dest-ifname=mirror --vxlan-id=100 | kubectl create -f -
+[centos@kube-master ~]$ ./kokotap --pod=centos --pod-container=centos-container --mirrortype=both --dest-node=kube-master --dest-ifname=mirror --vxlan-id=100 | kubectl create -f -
 pod/kokotap-centos-sender created
 pod/kokotap-centos-receiver-kube-master created
 [centos@kube-master ~]$ ip a
