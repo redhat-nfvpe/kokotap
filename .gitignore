@@ -1,5 +1,5 @@
-^kokotap_pod
-^kokotap
+/kokotap_pod
+/kokotap
 dist
 gopath
 *~

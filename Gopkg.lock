@@ -50,7 +50,7 @@
     "pkg/system",
   ]
   pruneopts = "UT"
-  revision = "bd5818eda84012cf1db4dafbddd4b7509bb77142"
+  revision = "09abf3a26b8a3aa69e29fd7faeb260b98d675759"
 
 [[projects]]
   branch = "master"
@@ -65,7 +65,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:328f7cd4c6b76467aba796757c1e6a613a0ec18a99ca59b0453b53fddf217ed9"
+  digest = "1:5b3b4a49ed2493f130a10120d2aa57d56c746cb83873d6f6e3752395128b8bb8"
   name = "github.com/docker/docker"
   packages = [
     "api",
@@ -88,7 +88,7 @@
     "errdefs",
   ]
   pruneopts = "UT"
-  revision = "bc4c1c238b551ce58fc26690523354d1571bab1d"
+  revision = "b8e87cfdad8daa6ef782ddb90691a259483bc8e4"
 
 [[projects]]
   digest = "1:811c86996b1ca46729bad2724d4499014c4b9effd05ef8c71b852aad90deb0ce"
@@ -294,11 +294,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3f9a45b5bd2875b645b3896c6ee820365641ab614b0b8a0333d37fc911e7fb61"
+  digest = "1:363d2ca5507baa95109d2949078ef2f7794dba635e9ed33f53f21119d3350924"
   name = "github.com/redhat-nfvpe/koko"
   packages = ["api"]
   pruneopts = "UT"
-  revision = "73840f1b9fdc77468bb788017694ab57d44eb1a3"
+  revision = "cb670c93cde5ce5d6222fc27da6b6bb949bf9e78"
 
 [[projects]]
   digest = "1:3f53e9e4dfbb664cd62940c9c4b65a2171c66acd0b7621a1a6b8e78513525a52"
@@ -341,11 +341,11 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "e84da0312774c21d64ee2317962ef669b27ffb41"
+  revision = "bc7917b19d8f099105de72dc62898400be07c984"
 
 [[projects]]
   branch = "master"
-  digest = "1:52b788fa000c7636a9704a13a0727f5099a3ae1a78024d23c2e5f3d9df66137a"
+  digest = "1:9539b9aff76641a0aa82f69406bff0fb949a171a19c24bbedde7317e8cf5a9a4"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -358,7 +358,7 @@
     "proxy",
   ]
   pruneopts = "UT"
-  revision = "9b4f9f5ad5197c79fd623a3638e70d8b26cef344"
+  revision = "c44066c5c816ec500d459a2a324a753f78531ae0"
 
 [[projects]]
   branch = "master"
@@ -373,14 +373,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ee1372e91413a5e5cd8921b4fab9eed68b8d669c78b066e6493ae9466a318975"
+  digest = "1:a5090ea95e2600b2a369df77359c5871948f12bc8f0632db0342f5acc5e30c1d"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "731415f00dce967a133e841b3079eda31c996761"
+  revision = "d69651ed3497faee15a5363a89578e9991f6d5e2"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -455,7 +455,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:563d1dee8245e168278d7c16bcd1ced84ddc74cb3644cd8713f5c82ef211a3c6"
+  digest = "1:032674b2ecb7363f0563f42572c9bf77288cdb63f9ad0a6730aa8aa342007927"
   name = "k8s.io/api"
   packages = [
     "admissionregistration/v1alpha1",
@@ -491,11 +491,11 @@
     "storage/v1beta1",
   ]
   pruneopts = "UT"
-  revision = "843ad2d9b9ae703c74f2f43959e6ce0b24cc3185"
+  revision = "9fcf73cc980bd64f38a4f721a7371b0ebb72e1ff"
 
 [[projects]]
   branch = "master"
-  digest = "1:45dfef2f63bde631e0e7c80f97073c94a6792ead321e6974545fe05affc866f9"
+  digest = "1:623df146d2e3e8eab526131f54af61771e7880a2e3e856b8294a6fb08d28b2bc"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/errors",
@@ -535,7 +535,7 @@
     "third_party/forked/golang/reflect",
   ]
   pruneopts = "UT"
-  revision = "60666be32c5de527b69dabe8e4400b4f0aa897de"
+  revision = "b7f9f1fa80aef2c4d97c27d38bba371e6caccb47"
 
 [[projects]]
   digest = "1:51fd9ac9f2be10d79f5af101a7a1d758ef283fdb028a0d11198754bd3d4a6020"

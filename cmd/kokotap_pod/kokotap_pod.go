@@ -198,7 +198,7 @@ func main() {
 		done <- true
 	}()
 
-	egressMTU, err := veth.GetEgressMTU()
+	egressMTU, err := koko.GetMTU(veth.MirrorEgress)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
 	}
@@ -216,7 +216,7 @@ func main() {
 	<-done
 
 	// Cleanup
-	err = veth.SetEgressMTU(egressMTU)
+	err = koko.SetMTU(veth.MirrorEgress, egressMTU)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
 	}
