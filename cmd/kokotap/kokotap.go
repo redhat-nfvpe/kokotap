@@ -123,7 +123,7 @@ spec:
   containers:
     - name: %s
       image: docker.io/s1061123/kokotap:latest
-      command: ["/bin/kokotap"]
+      command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
              "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
              "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
@@ -135,7 +135,7 @@ spec:
       - name: proc
         mountPath: /host/proc
   volumes:
-    - name: var-docker
+    - name: var-crio
       hostPath:
         path: /var/run/crio/crio.sock
     - name: proc
@@ -152,7 +152,7 @@ spec:
   containers:
     - name: %s
       image: docker.io/s1061123/kokotap:latest
-      command: ["/bin/kokotap"]
+      command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
              "--ifname=%s", "--vxlan-egressif=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
       securityContext:
