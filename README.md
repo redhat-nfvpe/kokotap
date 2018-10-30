@@ -76,6 +76,8 @@ pod "kokotap-centos-receiver-kube-master" deleted
 (snip)
 ```
 
+You can also delete mirror interface by removing two pods (begins with 'kokotap-', find by 'kubectl get pod')
+
 
 ## Example2 - Create a mirror interface for Pod 'centos'
 
@@ -116,6 +118,8 @@ pod "kokotap-centos-receiver-kube-master" deleted
        valid_lft forever preferred_lft forever
 (snip)
 ```
+
+You can also delete mirror interface by removing two pods (begins with 'kokotap-', find by 'kubectl get pod')
 
 # Todo
 - Add more usable feature (logging?)
