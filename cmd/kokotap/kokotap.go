@@ -154,7 +154,7 @@ spec:
       image: docker.io/s1061123/kokotap:latest
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
-             "--ifname=%s", "--vxlan-egressif=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
+             "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
       securityContext:
         privileged: true
 `
