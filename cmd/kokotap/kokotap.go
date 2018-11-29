@@ -251,7 +251,7 @@ func main() {
 	k.Flag("vxlan-id", "VxLAN ID to encap tap traffic").
 		Required().IntVar(&args.VxlanID)
 	k.Flag("mirrortype", "mirroring type {ingress|egress|both}").
-		Default("both").StringVar(&args.MirrorType)
+		Default("both").EnumVar(&args.MirrorType, "ingress", "egress", "both")
 	k.Flag("dest-node", "kubernetes node for tap interface").Required().StringVar(&args.DestNode)
 	k.Flag("dest-ifname", "tap interface name").Required().StringVar(&args.DestIFName)
 	k.Flag("namespace", "namespace for pod/container (optional)").
