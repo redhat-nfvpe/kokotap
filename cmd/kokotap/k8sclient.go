@@ -17,16 +17,12 @@
 package main
 
 import (
-	//"flag"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-/*
-	"k8s.io/client-go/util/retry"
-*/
 	"os"
 )
 
@@ -114,7 +110,6 @@ func GetK8sClient(kubeconfig string, kubeClient KubeClient) (KubeClient, error) 
 
 	return &defaultKubeClient{client: client}, nil
 }
-
 
 func GetHostIP (nodeaddr *[]v1.NodeAddress) (hostname, hostip string) {
 	for _, val := range *nodeaddr {

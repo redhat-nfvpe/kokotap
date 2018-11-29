@@ -195,6 +195,7 @@ func (podargs *KokotapPodArgs) ParseKokoTapArgs(args *KokotapArgs) error {
 	if err != nil {
 		return fmt.Errorf("err:%v", err)
 	}
+
 	podargs.PodName = args.Pod
 	podargs.Sender.VxlanEgressIP = pod.Status.HostIP
 	podargs.Receiver.VxlanIP = pod.Status.HostIP
@@ -202,14 +203,14 @@ func (podargs *KokotapPodArgs) ParseKokoTapArgs(args *KokotapArgs) error {
 
 	isContainerFound := false
 	for _, val := range pod.Status.ContainerStatuses {
-		if val.Name == args.Container {
+		if val.Ready == true {
 			podargs.Sender.ContainerID = val.ContainerID
 			isContainerFound = true
 			break
 		}
 	}
 	if isContainerFound != true {
-		return fmt.Errorf("container: %s is not found", args.Container)
+		return fmt.Errorf("no ready container in pod: %q", args.Pod)
 	}
 
 	podargs.ContainerRuntime = podargs.Sender.
@@ -231,12 +232,6 @@ func (podargs *KokotapPodArgs) ParseKokoTapArgs(args *KokotapArgs) error {
 	return nil
 }
 
-func (args *KokotapArgs) fillOptionalArgs() {
-	if args.Container == "" {
-		args.Container = args.Pod
-	}
-}
-
 func main() {
 	var args KokotapArgs
 /*
@@ -253,8 +248,6 @@ func main() {
 	k.Flag("pod", "tap target pod name").Required().StringVar(&args.Pod)
 	k.Flag("pod-ifname", "tap target interface name of pod (optional)").
 		Default("eth0").StringVar(&args.PodIFName)
-	k.Flag("pod-container", "tap target container name (optional)").
-		StringVar(&args.Container)
 	k.Flag("vxlan-id", "VxLAN ID to encap tap traffic").
 		Required().IntVar(&args.VxlanID)
 	k.Flag("mirrortype", "mirroring type {ingress|egress|both}").
@@ -267,22 +260,14 @@ func main() {
 		Envar("KUBECONFIG").StringVar(&args.KubeConfig)
 
 	kingpin.MustParse(k.Parse(os.Args[1:]))
-	args.fillOptionalArgs()
-/*
-	switch kingpin.MustParse(a.Parse(os.Args[1:])) {
-	case k.FullCommand():
-		args.fillOptionalArgs()
-		//fmt.Printf("args: %+v\n", args)
-	}
-*/
 
 	podArgs := KokotapPodArgs{}
 	err := podArgs.ParseKokoTapArgs(&args)
-	
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "err: %v\n", err)
 	}
-	
+
 	switch podArgs.ContainerRuntime {
 	case "docker":
 		fmt.Printf("%s", podArgs.GenerateDockerYaml())
