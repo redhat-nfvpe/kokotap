@@ -11,69 +11,69 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+package main
 
 /*
- kokotap_pod: kokotap code for pod/container
+ * kokotap_pod: kokotap code for pod/container
  */
-package main
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
-	"path/filepath"
+	koko "github.com/redhat-nfvpe/koko/api"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net"
+	"os"
+	"os/signal"
+	"path/filepath"
 	"strings"
-	koko "github.com/redhat-nfvpe/koko/api"
+	"syscall"
 )
 
 // VERSION indicates kokotap's version.
 var VERSION = "master@git"
 
-type SenderArgs struct {
-	ContainerID string
-	MirrorType string
-	MirrorIfName string
-	IfName string
+type senderArgs struct {
+	ContainerID   string
+	MirrorType    string
+	MirrorIfName  string
+	IfName        string
 	VxlanEgressIf string
 	VxlanEgressIP string
-	VxlanID int
-	VxlanIP net.IP
+	VxlanID       int
+	VxlanIP       net.IP
 }
 
-type ReceiverArgs struct {
-	IfName string
+type receiverArgs struct {
+	IfName        string
 	VxlanEgressIf string
 	VxlanEgressIP string
-	VxlanID int
-	VxlanIP net.IP
+	VxlanID       int
+	VxlanIP       net.IP
 }
 
 func getInterfaceByAddr(addr string) (*net.Interface, error) {
-        ifs, err := net.Interfaces()
-        if err != nil {
-                return nil, err
-        }
+	ifs, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
 
-        for _, i := range ifs {
-                addrs, err := i.Addrs()
-                if err != nil {
-                        return nil, err
-                }
+	for _, i := range ifs {
+		addrs, err := i.Addrs()
+		if err != nil {
+			return nil, err
+		}
 		// TODO: need to refine for optimization
-                for _, a := range addrs {
-                        ip, _, _ := net.ParseCIDR(a.String())
-                        if ip.String() == addr {
-                                return &i, err
-                        }
-                }
-        }
-        return nil, err
+		for _, a := range addrs {
+			ip, _, _ := net.ParseCIDR(a.String())
+			if ip.String() == addr {
+				return &i, err
+			}
+		}
+	}
+	return nil, err
 }
 
-func parseSenderArgs(procPrefix string, args *SenderArgs) (*koko.VEth, *koko.VxLan, error) {
+func parseSenderArgs(procPrefix string, args *senderArgs) (*koko.VEth, *koko.VxLan, error) {
 	var err error
 	veth := koko.VEth{}
 
@@ -120,7 +120,7 @@ func parseSenderArgs(procPrefix string, args *SenderArgs) (*koko.VEth, *koko.VxL
 	return &veth, &vxlan, nil
 }
 
-func parseReceiverArgs(procPrefix string, args *ReceiverArgs) (*koko.VEth, *koko.VxLan, error) {
+func parseReceiverArgs(procPrefix string, args *receiverArgs) (*koko.VEth, *koko.VxLan, error) {
 	exists, _ := koko.IsExistLinkInNS("", args.IfName)
 	if exists == true {
 		return nil, nil, fmt.Errorf("XXX")
@@ -149,8 +149,8 @@ func main() {
 	a := kingpin.New(filepath.Base(os.Args[0]), "kokotap")
 	a.Version(VERSION)
 
-	var senderArgs SenderArgs
-	var receiverArgs ReceiverArgs
+	var senderArgs senderArgs
+	var receiverArgs receiverArgs
 	var procPrefix string
 	var _ koko.VxLan
 

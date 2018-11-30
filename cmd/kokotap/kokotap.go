@@ -11,12 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-/*
- kokotap main code
- */
 package main
 
+/*
+ * kokotap main code
+ */
 import (
 	"fmt"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -29,44 +28,44 @@ import (
 // VERSION indicates kokotap's version.
 var VERSION = "master@git"
 
-type KokotapArgs struct {
-	Pod string
-	Namespace string // optional
-	Container string //optional
-	PodIFName string //optional
-	DestNode string
+type kokotapArgs struct {
+	Pod        string
+	Namespace  string // optional
+	Container  string //optional
+	PodIFName  string //optional
+	DestNode   string
 	DestIFName string
 	MirrorType string
-	VxlanID int
+	VxlanID    int
 	KubeConfig string // optional
 }
 
-type KokotapPodArgs struct {
+type kokotapPodArgs struct {
 	ContainerRuntime string
-	PodName string
-	VxlanID int
-	IFName string
-	Sender struct {
-		Node string
-		ContainerID string
-		MirrorType string
-		MirrorIF string
+	PodName          string
+	VxlanID          int
+	IFName           string
+	Sender           struct {
+		Node          string
+		ContainerID   string
+		MirrorType    string
+		MirrorIF      string
 		VxlanEgressIP string
-		VxlanIP string
+		VxlanIP       string
 	}
 	Receiver struct {
-		Node string
+		Node          string
 		VxlanEgressIP string
-		VxlanIP string
+		VxlanIP       string
 	}
 }
 
-func (podargs *KokotapPodArgs) GeneratePodName() (string, string) {
+func (podargs *kokotapPodArgs) GeneratePodName() (string, string) {
 	return fmt.Sprintf("kokotap-%s-sender", podargs.PodName),
-	fmt.Sprintf("kokotap-%s-receiver-%s", podargs.PodName, podargs.Receiver.Node)
+		fmt.Sprintf("kokotap-%s-receiver-%s", podargs.PodName, podargs.Receiver.Node)
 }
 
-func (podargs *KokotapPodArgs) GenerateDockerYaml() (string) {
+func (podargs *kokotapPodArgs) GenerateDockerYaml() string {
 	senderPod, receiverPod := podargs.GeneratePodName()
 	kokoTapPodDockerTemplate := `
 ---
@@ -120,11 +119,11 @@ spec:
 		podargs.Sender.ContainerID,
 		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
 		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID,
-		receiverPod, podargs.Receiver.Node, receiverPod, 
+		receiverPod, podargs.Receiver.Node, receiverPod,
 		podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
 }
 
-func (podargs *KokotapPodArgs) GenerateCrioYaml() (string) {
+func (podargs *kokotapPodArgs) GenerateCrioYaml() string {
 	senderPod, receiverPod := podargs.GeneratePodName()
 	kokoTapPodCrioTemplate := `
 ---
@@ -182,12 +181,12 @@ spec:
 		podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
 }
 
-func (podargs *KokotapPodArgs) ParseKokoTapArgs(args *KokotapArgs) error {
+func (podargs *kokotapPodArgs) ParseKokoTapArgs(args *kokotapArgs) error {
 	if args == nil {
 		return fmt.Errorf("Invalid args")
 	}
 
-	kubeClient, err := GetK8sClient(args.KubeConfig, nil)
+	kubeClient, err := getK8sClient(args.KubeConfig, nil)
 	if err != nil {
 		return fmt.Errorf("err:%v", err)
 	}
@@ -221,10 +220,10 @@ func (podargs *KokotapPodArgs) ParseKokoTapArgs(args *KokotapArgs) error {
 	podargs.VxlanID = args.VxlanID
 
 	destNode, err := kubeClient.GetNode(args.DestNode)
-        if err != nil {
+	if err != nil {
 		return fmt.Errorf("err:%v", err)
-        }
-	destNodeName, destIP := GetHostIP(&destNode.Status.Addresses)
+	}
+	destNodeName, destIP := getHostIP(&destNode.Status.Addresses)
 	podargs.Receiver.VxlanEgressIP = destIP
 	podargs.Sender.VxlanIP = destIP
 	podargs.Receiver.Node = destNodeName
@@ -233,14 +232,14 @@ func (podargs *KokotapPodArgs) ParseKokoTapArgs(args *KokotapArgs) error {
 }
 
 func main() {
-	var args KokotapArgs
-/*
-	a := kingpin.New(filepath.Base(os.Args[0]), "kokotap_pod")
-	a.Version(VERSION)
-	a.HelpFlag.Short('h')
+	var args kokotapArgs
+	/*
+		a := kingpin.New(filepath.Base(os.Args[0]), "kokotap_pod")
+		a.Version(VERSION)
+		a.HelpFlag.Short('h')
 
-	k := a.Command("create", "create tap interface for kubernetes pod")
-*/
+		k := a.Command("create", "create tap interface for kubernetes pod")
+	*/
 	k := kingpin.New(filepath.Base(os.Args[0]), "kokotap")
 	k.Version(VERSION)
 	k.HelpFlag.Short('h')
@@ -261,7 +260,7 @@ func main() {
 
 	kingpin.MustParse(k.Parse(os.Args[1:]))
 
-	podArgs := KokotapPodArgs{}
+	podArgs := kokotapPodArgs{}
 	err := podArgs.ParseKokoTapArgs(&args)
 
 	if err != nil {

@@ -1,4 +1,3 @@
-
 // Copyright 2018 Red Hat
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +30,7 @@ type NoK8sNetworkError struct {
 	message string
 }
 
-type KubeClient interface {
+type kubeClient interface {
 	GetRawWithPath(path string) ([]byte, error)
 	GetPod(namespace, name string) (*v1.Pod, error)
 	UpdatePodStatus(pod *v1.Pod) (*v1.Pod, error)
@@ -40,7 +39,7 @@ type KubeClient interface {
 }
 
 type clientInfo struct {
-	Client       KubeClient
+	Client       kubeClient
 	Podnamespace string
 	Podname      string
 }
@@ -52,7 +51,7 @@ type defaultKubeClient struct {
 }
 
 // defaultKubeClient implements KubeClient
-var _ KubeClient = &defaultKubeClient{}
+var _ kubeClient = &defaultKubeClient{}
 
 func (d *defaultKubeClient) GetRawWithPath(path string) ([]byte, error) {
 	return d.client.ExtensionsV1beta1().RESTClient().Get().AbsPath(path).DoRaw()
@@ -74,7 +73,7 @@ func (d *defaultKubeClient) List() (*v1.NodeList, error) {
 	return d.client.Core().Nodes().List(metav1.ListOptions{})
 }
 
-func GetK8sClient(kubeconfig string, kubeClient KubeClient) (KubeClient, error) {
+func getK8sClient(kubeconfig string, kubeClient kubeClient) (kubeClient, error) {
 	// If we get a valid kubeClient (eg from testcases) just return that
 	// one.
 	if kubeClient != nil {
@@ -111,7 +110,7 @@ func GetK8sClient(kubeconfig string, kubeClient KubeClient) (KubeClient, error) 
 	return &defaultKubeClient{client: client}, nil
 }
 
-func GetHostIP (nodeaddr *[]v1.NodeAddress) (hostname, hostip string) {
+func getHostIP(nodeaddr *[]v1.NodeAddress) (hostname, hostip string) {
 	for _, val := range *nodeaddr {
 		switch val.Type {
 		case v1.NodeHostName:
