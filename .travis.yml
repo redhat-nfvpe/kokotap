@@ -1,0 +1,32 @@
+language: go
+# see https://docs.travis-ci.com/user/reference/overview/#Virtualization-environments
+# for the detail
+# sudo: requried
+dist: trusty
+
+before_install:
+  - sudo apt-get update -qq
+
+install:
+  - go get -u golang.org/x/lint/golint
+
+before_script:
+  - golint ./cmd/kokotap/... | xargs -r false
+  - golint ./cmd/kokotap_pod/... | xargs -r false
+  - go fmt ./cmd/kokotap/...
+  - go fmt ./cmd/kokotap_pod/...
+  - go vet ./cmd/kokotap/...
+  - go vet ./cmd/kokotap_pod/...
+
+script:
+  - ./build
+  - docker build .
+
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: curl -sL https://git.io/goreleaser | bash
+    on:
+      tags: true
+      all_branches: true
+      condition: "$TRAVIS_TAG =~ ^v[0-9].*$"
