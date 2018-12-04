@@ -30,19 +30,18 @@ Flags:
       --pod-ifname="eth0"        tap target interface name of pod (optional)
       --pod-container=POD-CONTAINER  
                                  tap target container name (optional)
+      --ifname="mirror"          Mirror interface name
       --vxlan-id=VXLAN-ID        VxLAN ID to encap tap traffic
       --mirrortype="both"         mirroring type {ingress|egress|both}
       --dest-node=DEST-NODE      kubernetes node for tap interface
-      --dest-ifname=DEST-IFNAME  tap interface name
       --namespace="default"      namespace for pod/container (optional)
       --kubeconfig=KUBECONFIG    kubeconfig file path (optional)
 ```
-
-## Example1 - Create a mirror interface for Container 'centos-container' in Pod 'centos'
+## Example1 - Create a mirror interface for Pod 'centos'
 
 ```
-[centos@kube-master ~]$ ./kokotap --pod=centos --pod-container=centos-container \
-    --mirrortype=both --dest-node=kube-master --dest-ifname=mirror --vxlan-id=100 | kubectl create -f -
+[centos@kube-master ~]$ ./kokotap --pod=centos --mirrortype=both \
+    --dest-node=kube-master --vxlan-id=100 | kubectl create -f -
 pod/kokotap-centos-sender created
 pod/kokotap-centos-receiver-kube-master created
 [centos@kube-master ~]$ ip a
@@ -63,50 +62,7 @@ pod/kokotap-centos-receiver-kube-master created
 
 ```
 [centos@kube-master ~]$ ./kokotap --pod=centos --mirrortype=both \
-    --dest-node=kube-master --dest-ifname=mirror --vxlan-id=100 | kubectl delete -f -
-pod "kokotap-centos-sender" deleted
-pod "kokotap-centos-receiver-kube-master" deleted
-[centos@kube-master ~]$ ip a
-1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
-    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-    inet 127.0.0.1/8 scope host lo
-       valid_lft forever preferred_lft forever
-    inet6 ::1/128 scope host 
-       valid_lft forever preferred_lft forever
-(snip)
-```
-
-You can also delete mirror interface by removing two pods (begins with 'kokotap-', find by 'kubectl get pod')
-
-
-## Example2 - Create a mirror interface for Pod 'centos'
-
-If your container name is same as pod name, you can skip to input '--pod-container' option.
-
-```
-[centos@kube-master ~]$ ./kokotap --pod=centos --mirrortype=both \
-    --dest-node=kube-master --dest-ifname=mirror --vxlan-id=100 | kubectl create -f -
-pod/kokotap-centos-sender created
-pod/kokotap-centos-receiver-kube-master created
-[centos@kube-master ~]$ ip a
-1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
-    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-    inet 127.0.0.1/8 scope host lo
-       valid_lft forever preferred_lft forever
-    inet6 ::1/128 scope host 
-       valid_lft forever preferred_lft forever
-(snip)
-17: mirror: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1450 qdisc noqueue state UNKNOWN qlen 1000
-    link/ether 7e:3a:cb:bf:95:28 brd ff:ff:ff:ff:ff:ff
-    inet6 fe80::7c3a:cbff:febf:9528/64 scope link 
-       valid_lft forever preferred_lft forever
-```
-
-### Delete mirror interface
-
-```
-[centos@kube-master ~]$ ./kokotap --pod=centos --mirrortype=both \
-    --dest-node=kube-master --dest-ifname=mirror --vxlan-id=100 | kubectl delete -f -
+    --dest-node=kube-master --vxlan-id=100 | kubectl delete -f -
 pod "kokotap-centos-sender" deleted
 pod "kokotap-centos-receiver-kube-master" deleted
 [centos@kube-master ~]$ ip a

@@ -19,7 +19,7 @@ package main
 import (
 	"fmt"
 	"gopkg.in/alecthomas/kingpin.v2"
-	//"net"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,10 +32,11 @@ var date = "unknown date"
 type kokotapArgs struct {
 	Pod        string
 	Namespace  string // optional
-	Container  string //optional
-	PodIFName  string //optional
+	Container  string // optional
+	PodIFName  string // optional
+	IFName     string // optional (ifname for tapping if)
 	DestNode   string
-	DestIFName string
+	DestIP     net.IP
 	MirrorType string
 	VxlanID    int
 	KubeConfig string // optional
@@ -51,13 +52,13 @@ type kokotapPodArgs struct {
 		ContainerID   string
 		MirrorType    string
 		MirrorIF      string
-		VxlanEgressIP string
-		VxlanIP       string
+		VxlanEgressIP string // Egress IF's IP
+		VxlanIP       string // Dest Vxlan IP
 	}
 	Receiver struct {
 		Node          string
-		VxlanEgressIP string
-		VxlanIP       string
+		VxlanEgressIP string // Egress IF's IP
+		VxlanIP       string // Dest Vxlan IP
 	}
 }
 
@@ -68,7 +69,7 @@ func (podargs *kokotapPodArgs) GeneratePodName() (string, string) {
 
 func (podargs *kokotapPodArgs) GenerateDockerYaml() string {
 	senderPod, receiverPod := podargs.GeneratePodName()
-	kokoTapPodDockerTemplate := `
+	kokoTapPodDockerSenderTemplate := `
 ---
 apiVersion: v1
 kind: Pod
@@ -98,6 +99,8 @@ spec:
     - name: proc
       hostPath:
         path: /proc
+`
+	kokoTapPodDockerReceiverTemplate := `
 ---
 apiVersion: v1
 kind: Pod
@@ -115,18 +118,24 @@ spec:
       securityContext:
         privileged: true
 `
-	return fmt.Sprintf(kokoTapPodDockerTemplate,
+	yaml := fmt.Sprintf(kokoTapPodDockerSenderTemplate,
 		senderPod, podargs.Sender.Node, senderPod,
 		podargs.Sender.ContainerID,
 		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
-		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID,
-		receiverPod, podargs.Receiver.Node, receiverPod,
-		podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
+		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID)
+
+	if podargs.Receiver.Node != "" {
+		yaml = yaml + fmt.Sprintf(kokoTapPodDockerReceiverTemplate,
+			receiverPod, podargs.Receiver.Node, receiverPod,
+			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
+	}
+
+	return yaml
 }
 
 func (podargs *kokotapPodArgs) GenerateCrioYaml() string {
 	senderPod, receiverPod := podargs.GeneratePodName()
-	kokoTapPodCrioTemplate := `
+	kokoTapPodCrioSenderTemplate := `
 ---
 apiVersion: v1
 kind: Pod
@@ -156,6 +165,8 @@ spec:
     - name: proc
       hostPath:
         path: /proc
+`
+	kokoTapPodCrioReceiverTemplate := `
 ---
 apiVersion: v1
 kind: Pod
@@ -173,13 +184,19 @@ spec:
       securityContext:
         privileged: true
 `
-	return fmt.Sprintf(kokoTapPodCrioTemplate,
+	yaml := fmt.Sprintf(kokoTapPodCrioSenderTemplate,
 		senderPod, podargs.Sender.Node, senderPod,
 		podargs.Sender.ContainerID,
 		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
-		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID,
-		receiverPod, podargs.Receiver.Node, receiverPod,
-		podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
+		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID)
+
+	if podargs.Receiver.Node != "" {
+		yaml = yaml + fmt.Sprintf(kokoTapPodCrioReceiverTemplate,
+			receiverPod, podargs.Receiver.Node, receiverPod,
+			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
+	}
+
+	return yaml
 }
 
 func (podargs *kokotapPodArgs) ParseKokoTapArgs(args *kokotapArgs) error {
@@ -215,19 +232,26 @@ func (podargs *kokotapPodArgs) ParseKokoTapArgs(args *kokotapArgs) error {
 
 	podargs.ContainerRuntime = podargs.Sender.
 		ContainerID[0:strings.Index(podargs.Sender.ContainerID, ":")]
-	podargs.IFName = "mirror"
+	podargs.IFName = args.IFName
 	podargs.Sender.MirrorType = args.MirrorType
 	podargs.Sender.MirrorIF = args.PodIFName
 	podargs.VxlanID = args.VxlanID
 
-	destNode, err := kubeClient.GetNode(args.DestNode)
-	if err != nil {
-		return fmt.Errorf("err:%v", err)
+	if args.DestNode != "" && args.DestIP == nil {
+		destNode, err := kubeClient.GetNode(args.DestNode)
+		if err != nil {
+			return fmt.Errorf("err:%v", err)
+		}
+		destNodeName, destIP := getHostIP(&destNode.Status.Addresses)
+		podargs.Receiver.VxlanEgressIP = destIP
+		podargs.Sender.VxlanIP = destIP
+		podargs.Receiver.Node = destNodeName
+	} else if args.DestNode == "" && args.DestIP != nil {
+		podargs.Receiver.VxlanEgressIP = string(args.DestIP)
+		podargs.Sender.VxlanIP = args.DestIP.String()
+	} else {
+		return fmt.Errorf("please set dest-node or dest-ip")
 	}
-	destNodeName, destIP := getHostIP(&destNode.Status.Addresses)
-	podargs.Receiver.VxlanEgressIP = destIP
-	podargs.Sender.VxlanIP = destIP
-	podargs.Receiver.Node = destNodeName
 
 	return nil
 }
@@ -251,10 +275,11 @@ func main() {
 		Default("eth0").StringVar(&args.PodIFName)
 	k.Flag("vxlan-id", "VxLAN ID to encap tap traffic").
 		Required().IntVar(&args.VxlanID)
+	k.Flag("ifname", "Mirror interface name").Default("mirror").StringVar(&args.IFName)
 	k.Flag("mirrortype", "mirroring type {ingress|egress|both}").
 		Default("both").EnumVar(&args.MirrorType, "ingress", "egress", "both")
-	k.Flag("dest-node", "kubernetes node for tap interface").Required().StringVar(&args.DestNode)
-	k.Flag("dest-ifname", "tap interface name").Required().StringVar(&args.DestIFName)
+	k.Flag("dest-node", "kubernetes node for tap interface").StringVar(&args.DestNode)
+	k.Flag("dest-ip", "kubernetes node for tap interface").IPVar(&args.DestIP)
 	k.Flag("namespace", "namespace for pod/container (optional)").
 		Default("default").StringVar(&args.Namespace)
 	k.Flag("kubeconfig", "kubeconfig file path (optional)").
