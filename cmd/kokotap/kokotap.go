@@ -25,8 +25,9 @@ import (
 	"strings"
 )
 
-// VERSION indicates kokotap's version.
-var VERSION = "master@git"
+var version = "master@git"
+var commit = "unknown commit"
+var date = "unknown date"
 
 type kokotapArgs struct {
 	Pod        string
@@ -241,8 +242,9 @@ func main() {
 		k := a.Command("create", "create tap interface for kubernetes pod")
 	*/
 	k := kingpin.New(filepath.Base(os.Args[0]), "kokotap")
-	k.Version(VERSION)
+	k.Version(fmt.Sprintf("%s/%s/%s", version, commit, date))
 	k.HelpFlag.Short('h')
+	k.VersionFlag.Short('v')
 
 	k.Flag("pod", "tap target pod name").Required().StringVar(&args.Pod)
 	k.Flag("pod-ifname", "tap target interface name of pod (optional)").

@@ -29,8 +29,9 @@ import (
 	"syscall"
 )
 
-// VERSION indicates kokotap's version.
-var VERSION = "master@git"
+var version = "master@git"
+var commit = "unknown commit"
+var date = "unknown date"
 
 type senderArgs struct {
 	ContainerID   string
@@ -147,7 +148,7 @@ func parseReceiverArgs(procPrefix string, args *receiverArgs) (*koko.VEth, *koko
 
 func main() {
 	a := kingpin.New(filepath.Base(os.Args[0]), "kokotap")
-	a.Version(VERSION)
+	a.Version(fmt.Sprintf("%s/%s/%s", version, commit, date))
 
 	var senderArgs senderArgs
 	var receiverArgs receiverArgs
@@ -155,6 +156,7 @@ func main() {
 	var _ koko.VxLan
 
 	a.HelpFlag.Short('h')
+	a.VersionFlag.Short('h')
 	a.Flag("procprefix", "prefix for /proc filesystem").StringVar(&procPrefix)
 	//a.Flag("mode", "Kokotap mode (sender/receiver)").StringVar(&mode)
 	k := a.Command("mode", "Kokotap mode (sender/receiver)")
