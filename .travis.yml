@@ -25,7 +25,7 @@ script:
 deploy:
   - provider: script
     skip_cleanup: true
-    script: curl -sL https://git.io/goreleaser | bash
+    script: curl -sL https://git.io/goreleaser | bash --release-notes=/dev/null
     on:
       tags: true
       all_branches: true
