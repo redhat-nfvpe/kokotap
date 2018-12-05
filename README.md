@@ -1,4 +1,5 @@
 # kokotap: Tapping Pod Traffic to VxLAN interface
+[![Travis CI](https://travis-ci.org/redhat-nfvpe/kokotap.svg?branch=master)](https://travis-ci.org/redhat-nfvpe/kokotap/builds)
 
 # What is 'kokotap'?
 
