@@ -279,7 +279,7 @@ func main() {
 	k.Flag("mirrortype", "mirroring type {ingress|egress|both}").
 		Default("both").EnumVar(&args.MirrorType, "ingress", "egress", "both")
 	k.Flag("dest-node", "kubernetes node for tap interface").StringVar(&args.DestNode)
-	k.Flag("dest-ip", "kubernetes node for tap interface").IPVar(&args.DestIP)
+	k.Flag("dest-ip", "IP address for destination tap interface").IPVar(&args.DestIP)
 	k.Flag("namespace", "namespace for pod/container (optional)").
 		Default("default").StringVar(&args.Namespace)
 	k.Flag("kubeconfig", "kubeconfig file path (optional)").
