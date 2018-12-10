@@ -156,7 +156,7 @@ func main() {
 	var _ koko.VxLan
 
 	a.HelpFlag.Short('h')
-	a.VersionFlag.Short('h')
+	a.VersionFlag.Short('v')
 	a.Flag("procprefix", "prefix for /proc filesystem").StringVar(&procPrefix)
 	//a.Flag("mode", "Kokotap mode (sender/receiver)").StringVar(&mode)
 	k := a.Command("mode", "Kokotap mode (sender/receiver)")
