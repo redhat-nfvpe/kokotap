@@ -204,13 +204,22 @@ func (podargs *kokotapPodArgs) ParseKokoTapArgs(args *kokotapArgs) error {
 		return fmt.Errorf("Invalid args")
 	}
 
+	if args.KubeConfig == "" {
+		return fmt.Errorf("no kubeconfig option")
+	}
+
+	_, err := os.Stat(args.KubeConfig)
+	if err != nil {
+		return fmt.Errorf("kubeconfig %q is not found: %v", args.KubeConfig, err)
+	}
+
 	kubeClient, err := getK8sClient(args.KubeConfig, nil)
 	if err != nil {
-		return fmt.Errorf("err:%v", err)
+		return fmt.Errorf("%v", err)
 	}
 	pod, err := kubeClient.GetPod(args.Namespace, args.Pod)
 	if err != nil {
-		return fmt.Errorf("err:%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	podargs.PodName = args.Pod
@@ -240,7 +249,7 @@ func (podargs *kokotapPodArgs) ParseKokoTapArgs(args *kokotapArgs) error {
 	if args.DestNode != "" && args.DestIP == nil {
 		destNode, err := kubeClient.GetNode(args.DestNode)
 		if err != nil {
-			return fmt.Errorf("err:%v", err)
+			return fmt.Errorf("%v", err)
 		}
 		destNodeName, destIP := getHostIP(&destNode.Status.Addresses)
 		podargs.Receiver.VxlanEgressIP = destIP
