@@ -5,12 +5,15 @@
 
 `kokotap` provides network tapping for Kubernetes Pod. `kokotap` creates VxLAN interface to target Pod/Container then do packet mirroring to the VxLAN interface by [tc-mirred](http://man7.org/linux/man-pages/man8/tc-mirred.8.html). `kokotap` can also create VxLAN interface to Kubernetes target node (e.g. 'kube-master') to capture the traffic or you can specify specific IP addresses for non Kubernetes node for capture.
 
-# Support
+# Supported Container Runtime
 
 `kokotap` supports following runtime:
 
 - Docker runtime
 - cri-o 
+
+# Get Releases
+See [releases page](https://github.com/redhat-nfvpe/kokotap/releases).
 
 # Syntax
 
