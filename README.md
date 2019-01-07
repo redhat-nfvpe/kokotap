@@ -37,6 +37,8 @@ Flags:
       --dest-ip=DEST-IP        IP address for destination tap interface
       --namespace="default"    namespace for pod/container (optional)
       --kubeconfig=KUBECONFIG  kubeconfig file path (optional)
+      --image="quay.io/s1061123/kokotap:latest"
+                               kokotap container image
 ```
 
 ## Example1 - Create a mirror interface for Pod 'centos' and receive interface "mirror" at kube-master.

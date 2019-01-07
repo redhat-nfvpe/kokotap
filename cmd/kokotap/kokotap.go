@@ -40,6 +40,7 @@ type kokotapArgs struct {
 	MirrorType string
 	VxlanID    int
 	KubeConfig string // optional
+	Image      string // optional
 }
 
 type kokotapPodArgs struct {
@@ -60,6 +61,7 @@ type kokotapPodArgs struct {
 		VxlanEgressIP string // Egress IF's IP
 		VxlanIP       string // Dest Vxlan IP
 	}
+	Image string
 }
 
 func (podargs *kokotapPodArgs) GeneratePodName() (string, string) {
@@ -80,7 +82,7 @@ spec:
   nodeName: %s
   containers:
     - name: %s
-      image: docker.io/nfvpe/kokotap:latest
+      image: %s
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
              "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
@@ -111,7 +113,7 @@ spec:
   nodeName: %s
   containers:
     - name: %s
-      image: docker.io/nfvpe/kokotap:latest
+      image: %s
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
              "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
@@ -119,14 +121,14 @@ spec:
         privileged: true
 `
 	yaml := fmt.Sprintf(kokoTapPodDockerSenderTemplate,
-		senderPod, podargs.Sender.Node, senderPod,
+		senderPod, podargs.Sender.Node, senderPod, podargs.Image,
 		podargs.Sender.ContainerID,
 		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
 		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID)
 
 	if podargs.Receiver.Node != "" {
 		yaml = yaml + fmt.Sprintf(kokoTapPodDockerReceiverTemplate,
-			receiverPod, podargs.Receiver.Node, receiverPod,
+			receiverPod, podargs.Receiver.Node, receiverPod, podargs.Image,
 			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
 	}
 
@@ -146,7 +148,7 @@ spec:
   nodeName: %s
   containers:
     - name: %s
-      image: docker.io/nfvpe/kokotap:latest
+      image: %s
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
              "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
@@ -177,7 +179,7 @@ spec:
   nodeName: %s
   containers:
     - name: %s
-      image: docker.io/nfvpe/kokotap:latest
+      image: %s
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
              "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
@@ -185,14 +187,14 @@ spec:
         privileged: true
 `
 	yaml := fmt.Sprintf(kokoTapPodCrioSenderTemplate,
-		senderPod, podargs.Sender.Node, senderPod,
+		senderPod, podargs.Sender.Node, senderPod, podargs.Image,
 		podargs.Sender.ContainerID,
 		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
 		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID)
 
 	if podargs.Receiver.Node != "" {
 		yaml = yaml + fmt.Sprintf(kokoTapPodCrioReceiverTemplate,
-			receiverPod, podargs.Receiver.Node, receiverPod,
+			receiverPod, podargs.Receiver.Node, receiverPod, podargs.Image,
 			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
 	}
 
@@ -226,6 +228,7 @@ func (podargs *kokotapPodArgs) ParseKokoTapArgs(args *kokotapArgs) error {
 	podargs.Sender.VxlanEgressIP = pod.Status.HostIP
 	podargs.Receiver.VxlanIP = pod.Status.HostIP
 	podargs.Sender.Node = pod.Spec.NodeName
+	podargs.Image = args.Image
 
 	isContainerFound := false
 	for _, val := range pod.Status.ContainerStatuses {
@@ -293,6 +296,7 @@ func main() {
 		Default("default").StringVar(&args.Namespace)
 	k.Flag("kubeconfig", "kubeconfig file path (optional)").
 		Envar("KUBECONFIG").StringVar(&args.KubeConfig)
+	k.Flag("image", "kokotap container image").Default("quay.io/s1061123/kokotap:latest").StringVar(&args.Image)
 
 	kingpin.MustParse(k.Parse(os.Args[1:]))
 
