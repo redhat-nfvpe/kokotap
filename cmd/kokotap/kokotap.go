@@ -80,7 +80,7 @@ spec:
   nodeName: %s
   containers:
     - name: %s
-      image: docker.io/nfvpe/kokotap:latest
+      image: quay.io/s1061123/kokotap:latest
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
              "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
@@ -111,7 +111,7 @@ spec:
   nodeName: %s
   containers:
     - name: %s
-      image: docker.io/nfvpe/kokotap:latest
+      image: quay.io/s1061123/kokotap:latest
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
              "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
@@ -146,7 +146,7 @@ spec:
   nodeName: %s
   containers:
     - name: %s
-      image: docker.io/nfvpe/kokotap:latest
+      image: quay.io/s1061123/kokotap:latest
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
              "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
@@ -177,7 +177,7 @@ spec:
   nodeName: %s
   containers:
     - name: %s
-      image: docker.io/nfvpe/kokotap:latest
+      image: quay.io/s1061123/kokotap:latest
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
              "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
