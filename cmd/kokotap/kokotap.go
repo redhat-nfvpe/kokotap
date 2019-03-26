@@ -66,8 +66,9 @@ type kokotapPodArgs struct {
 }
 
 func (podargs *kokotapPodArgs) GeneratePodName() (string, string) {
+	nodeName := strings.Replace(podargs.Receiver.Node, ".", "-", -1)
 	return fmt.Sprintf("kokotap-%s-sender", podargs.PodName),
-		fmt.Sprintf("kokotap-%s-receiver-%s", podargs.PodName, podargs.Receiver.Node)
+		fmt.Sprintf("kokotap-%s-receiver-%s", podargs.PodName, nodeName)
 }
 
 func (podargs *kokotapPodArgs) GenerateDockerYaml() string {
