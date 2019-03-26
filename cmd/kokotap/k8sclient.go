@@ -58,19 +58,19 @@ func (d *defaultKubeClient) GetRawWithPath(path string) ([]byte, error) {
 }
 
 func (d *defaultKubeClient) GetPod(namespace, name string) (*v1.Pod, error) {
-	return d.client.Core().Pods(namespace).Get(name, metav1.GetOptions{})
+	return d.client.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
 }
 
 func (d *defaultKubeClient) UpdatePodStatus(pod *v1.Pod) (*v1.Pod, error) {
-	return d.client.Core().Pods(pod.Namespace).UpdateStatus(pod)
+	return d.client.CoreV1().Pods(pod.Namespace).UpdateStatus(pod)
 }
 
 func (d *defaultKubeClient) GetNode(name string) (*v1.Node, error) {
-	return d.client.Core().Nodes().Get(name, metav1.GetOptions{})
+	return d.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 }
 
 func (d *defaultKubeClient) List() (*v1.NodeList, error) {
-	return d.client.Core().Nodes().List(metav1.ListOptions{})
+	return d.client.CoreV1().Nodes().List(metav1.ListOptions{})
 }
 
 func getK8sClient(kubeconfig string, kubeClient kubeClient) (kubeClient, error) {

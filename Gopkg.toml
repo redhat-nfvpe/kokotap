@@ -53,5 +53,10 @@ ignored = ["bytes"]
   unused-packages = true
 
 [[override]]
-  branch = "master"
+  #branch = "master"
+  version = "kubernetes-1.14.0"
   name = "k8s.io/api"
+
+[[override]]
+  version = "kubernetes-1.14.0"
+  name = "k8s.io/client-go"

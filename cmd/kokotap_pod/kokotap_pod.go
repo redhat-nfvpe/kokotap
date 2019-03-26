@@ -42,6 +42,7 @@ type senderArgs struct {
 	VxlanEgressIP string
 	VxlanID       int
 	VxlanIP       net.IP
+	VxlanPort     int //UDP Port
 }
 
 type receiverArgs struct {
@@ -50,6 +51,7 @@ type receiverArgs struct {
 	VxlanEgressIP string
 	VxlanID       int
 	VxlanIP       net.IP
+	VxlanPort     int //UDP Port
 }
 
 func getInterfaceByAddr(addr string) (*net.Interface, error) {
@@ -118,6 +120,7 @@ func parseSenderArgs(procPrefix string, args *senderArgs) (*koko.VEth, *koko.VxL
 	vxlan.ParentIF = args.VxlanEgressIf
 	vxlan.IPAddr = args.VxlanIP
 	vxlan.ID = args.VxlanID
+	vxlan.UDPPort = args.VxlanPort
 	return &veth, &vxlan, nil
 }
 
@@ -143,6 +146,7 @@ func parseReceiverArgs(procPrefix string, args *receiverArgs) (*koko.VEth, *koko
 	vxlan.ParentIF = args.VxlanEgressIf
 	vxlan.IPAddr = args.VxlanIP
 	vxlan.ID = args.VxlanID
+	vxlan.UDPPort = args.VxlanPort
 	return &veth, &vxlan, nil
 }
 
@@ -177,6 +181,8 @@ func main() {
 		Required().IntVar(&senderArgs.VxlanID)
 	s.Flag("vxlan-ip", "Vxlan neighbor IP").
 		Required().IPVar(&senderArgs.VxlanIP)
+	s.Flag("vxlan-port", "Vxlan UDP port").
+		Required().IntVar(&senderArgs.VxlanPort)
 
 	r := k.Command("receiver", "receiver mode")
 	r.Flag("ifname", "interface name").
@@ -189,6 +195,8 @@ func main() {
 		Required().IntVar(&receiverArgs.VxlanID)
 	r.Flag("vxlan-ip", "Vxlan neighbor IP").
 		Required().IPVar(&receiverArgs.VxlanIP)
+	r.Flag("vxlan-port", "Vxlan UDP port").
+		Required().IntVar(&receiverArgs.VxlanPort)
 
 	var veth *koko.VEth
 	var vxlan *koko.VxLan

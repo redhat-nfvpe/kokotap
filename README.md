@@ -31,6 +31,7 @@ Flags:
       --pod=POD                tap target pod name
       --pod-ifname="eth0"      tap target interface name of pod (optional)
       --vxlan-id=VXLAN-ID      VxLAN ID to encap tap traffic
+      --vxlan-port=4789        VxLAN UDP port
       --ifname="mirror"        Mirror interface name
       --mirrortype=both        mirroring type {ingress|egress|both}
       --dest-node=DEST-NODE    kubernetes node for tap interface

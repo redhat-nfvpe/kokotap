@@ -39,6 +39,7 @@ type kokotapArgs struct {
 	DestIP     net.IP
 	MirrorType string
 	VxlanID    int
+	VxlanPort  int    // UDP port, optional
 	KubeConfig string // optional
 	Image      string // optional
 }
@@ -86,7 +87,8 @@ spec:
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
              "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
-             "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
+             "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d",
+             "--vxlan-port=%d"]
       securityContext:
         privileged: true
       volumeMounts:
@@ -116,7 +118,8 @@ spec:
       image: %s
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
-             "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
+             "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d",
+             "--vxlan-port=%d"]
       securityContext:
         privileged: true
 `
@@ -152,7 +155,8 @@ spec:
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
              "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
-             "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
+             "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d",
+             "--vxlan-port=%d"]
       securityContext:
         privileged: true
       volumeMounts:
@@ -182,7 +186,8 @@ spec:
       image: %s
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
-             "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d"]
+             "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d",
+             "--vxlan-port=%d"]
       securityContext:
         privileged: true
 `
@@ -287,6 +292,7 @@ func main() {
 		Default("eth0").StringVar(&args.PodIFName)
 	k.Flag("vxlan-id", "VxLAN ID to encap tap traffic").
 		Required().IntVar(&args.VxlanID)
+	k.Flag("vxlan-port", "VxLAN UDP port").Default("4789").IntVar(&args.VxlanPort)
 	k.Flag("ifname", "Mirror interface name").Default("mirror").StringVar(&args.IFName)
 	k.Flag("mirrortype", "mirroring type {ingress|egress|both}").
 		Default("both").EnumVar(&args.MirrorType, "ingress", "egress", "both")
