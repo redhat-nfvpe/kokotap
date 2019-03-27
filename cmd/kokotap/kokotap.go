@@ -48,6 +48,7 @@ type kokotapPodArgs struct {
 	ContainerRuntime string
 	PodName          string
 	VxlanID          int
+	VxlanPort        int // UDP port, optional
 	IFName           string
 	Sender           struct {
 		Node          string
@@ -128,12 +129,13 @@ spec:
 		senderPod, podargs.Sender.Node, senderPod, podargs.Image,
 		podargs.Sender.ContainerID,
 		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
-		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID)
+		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID, podargs.VxlanPort)
 
 	if podargs.Receiver.Node != "" {
 		yaml = yaml + fmt.Sprintf(kokoTapPodDockerReceiverTemplate,
 			receiverPod, podargs.Receiver.Node, receiverPod, podargs.Image,
-			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
+			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP,
+			podargs.VxlanPort, podargs.VxlanID)
 	}
 
 	return yaml
@@ -196,12 +198,13 @@ spec:
 		senderPod, podargs.Sender.Node, senderPod, podargs.Image,
 		podargs.Sender.ContainerID,
 		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
-		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID)
+		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID, podargs.VxlanPort)
 
 	if podargs.Receiver.Node != "" {
 		yaml = yaml + fmt.Sprintf(kokoTapPodCrioReceiverTemplate,
 			receiverPod, podargs.Receiver.Node, receiverPod, podargs.Image,
-			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP, podargs.VxlanID)
+			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP,
+			podargs.VxlanPort, podargs.VxlanID)
 	}
 
 	return yaml
@@ -254,6 +257,7 @@ func (podargs *kokotapPodArgs) ParseKokoTapArgs(args *kokotapArgs) error {
 	podargs.Sender.MirrorType = args.MirrorType
 	podargs.Sender.MirrorIF = args.PodIFName
 	podargs.VxlanID = args.VxlanID
+	podargs.VxlanPort = args.VxlanPort
 
 	if args.DestNode != "" && args.DestIP == nil {
 		destNode, err := kubeClient.GetNode(args.DestNode)

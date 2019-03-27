@@ -223,13 +223,15 @@ func main() {
 		done <- true
 	}()
 
-	var egressMTU int
+	//var egressMTU int
 	var egressTxQLen int
 	if veth.MirrorEgress != "" {
-		egressMTU, err = koko.GetMTU(veth.MirrorEgress)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
-		}
+		/*
+			egressMTU, err = koko.GetMTU(veth.MirrorEgress)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
+			}
+		*/
 		egressTxQLen, err = veth.GetEgressTxQLen()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
@@ -246,10 +248,12 @@ func main() {
 
 	// Cleanup
 	if veth.MirrorEgress != "" {
-		err = koko.SetMTU(veth.MirrorEgress, egressMTU)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
-		}
+		/*
+			err = koko.SetMTU(veth.MirrorEgress, egressMTU)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
+			}
+		*/
 		err = veth.SetEgressTxQLen(egressTxQLen)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "XXX:%v\n", err)
