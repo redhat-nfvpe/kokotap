@@ -86,6 +86,7 @@ spec:
   containers:
     - name: %s
       image: %s
+      imagePullPolicy: Always
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
              "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
@@ -118,6 +119,7 @@ spec:
   containers:
     - name: %s
       image: %s
+      imagePullPolicy: Always
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
              "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d",
@@ -135,7 +137,7 @@ spec:
 		yaml = yaml + fmt.Sprintf(kokoTapPodDockerReceiverTemplate,
 			receiverPod, podargs.Receiver.Node, receiverPod, podargs.Image,
 			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP,
-			podargs.VxlanPort, podargs.VxlanID)
+			podargs.VxlanID, podargs.VxlanPort)
 	}
 
 	return yaml
@@ -155,6 +157,7 @@ spec:
   containers:
     - name: %s
       image: %s
+      imagePullPolicy: Always
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
              "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
@@ -186,6 +189,7 @@ spec:
   nodeName: %s
   containers:
     - name: %s
+      imagePullPolicy: Always
       image: %s
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
@@ -204,7 +208,7 @@ spec:
 		yaml = yaml + fmt.Sprintf(kokoTapPodCrioReceiverTemplate,
 			receiverPod, podargs.Receiver.Node, receiverPod, podargs.Image,
 			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP,
-			podargs.VxlanPort, podargs.VxlanID)
+			podargs.VxlanID, podargs.VxlanPort)
 	}
 
 	return yaml
