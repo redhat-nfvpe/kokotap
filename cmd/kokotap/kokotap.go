@@ -17,12 +17,15 @@ package main
  * kokotap main code
  */
 import (
+	"bytes"
 	"fmt"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"text/template"
 )
 
 var version = "master@git"
@@ -82,24 +85,25 @@ func (podargs *kokotapPodArgs) GeneratePodName() (string, string) {
 
 func (podargs *kokotapPodArgs) GenerateDockerYaml() string {
 	senderPod, receiverPod := podargs.GeneratePodName()
-	kokoTapPodDockerSenderTemplate := `
+
+	kokoTapPodDockerSenderTemplate, _ := template.New("kokotapPodDockerSenderTemplate").Parse(`
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: %s
+  name: {{.PodName}}
 spec:
   hostNetwork: true
-  nodeName: %s
+  nodeName: {{.NodeName}}
   containers:
-    - name: %s
-      image: %s
+    - name: {{.PodName}}
+      image: {{.ContainerImage}}
       imagePullPolicy: Always
       command: ["/bin/kokotap_pod"]
-      args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
-             "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
-             "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d",
-             "--vxlan-port=%d"]
+      args: ["--procprefix=/host", "mode", "sender", "--containerid={{.ContainerID}}",
+             "--mirrortype={{.MirrorType}}", "--mirrorif={{.MirrorIF}}", "--ifname={{.IFName}}",
+             "--vxlan-egressip={{.EgressIP}}", "--vxlan-ip={{.VXLANIP}}", "--vxlan-id={{.VXLANID}}",
+             "--vxlan-port={{.VXLANPort}}"]
       securityContext:
         privileged: true
       volumeMounts:
@@ -114,63 +118,90 @@ spec:
     - name: proc
       hostPath:
         path: /proc
-`
-	kokoTapPodDockerReceiverTemplate := `
+`)
+
+	kokoTapPodDockerReceiverTemplate, _ := template.New("kokotapPodDockerReceiverTemplate").Parse(`
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: %s
+  name: {{.PodName}}
 spec:
   hostNetwork: true
-  nodeName: %s
+  nodeName: {{.NodeName}}
   containers:
-    - name: %s
-      image: %s
+    - name: {{.PodName}}
+      image: {{.ContainerImage}}
       imagePullPolicy: Always
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
-             "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d",
-             "--vxlan-port=%d"]
+             "--ifname={{.IFName}}", "--vxlan-egressip={{.EgressIP}}",
+             "--vxlan-ip={{.VXLANIP}}", "--vxlan-id={{.VXLANID}}",
+             "--vxlan-port={{.VXLANPort}}"]
       securityContext:
         privileged: true
-`
-	yaml := fmt.Sprintf(kokoTapPodDockerSenderTemplate,
-		senderPod, podargs.Sender.Node, senderPod, podargs.Image,
-		podargs.Sender.ContainerID,
-		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
-		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID, podargs.VxlanPort)
+`)
 
-	if podargs.Receiver.Node != "" {
-		yaml = yaml + fmt.Sprintf(kokoTapPodDockerReceiverTemplate,
-			receiverPod, podargs.Receiver.Node, receiverPod, podargs.Image,
-			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP,
-			podargs.VxlanID, podargs.VxlanPort)
+	senderMap := map[string]string {
+		"PodName": senderPod,
+		"NodeName": podargs.Sender.Node,
+		"ContainerImage": podargs.Image,
+		"ContainerID": podargs.Sender.ContainerID,
+		"MirrorType": podargs.Sender.MirrorType,
+		"MirrorIF": podargs.Sender.MirrorIF,
+		"IFName": podargs.IFName,
+		"EgressIP": podargs.Sender.VxlanEgressIP,
+		"VXLANIP": podargs.Sender.VxlanIP,
+		"VXLANID": strconv.Itoa(podargs.VxlanID),
+		"VXLANPort": strconv.Itoa(podargs.VxlanPort),
 	}
 
-	return yaml
+	var yaml bytes.Buffer
+	if err := kokoTapPodDockerSenderTemplate.Execute(&yaml, senderMap); err != nil {
+		panic(err)
+	}
+
+
+	if podargs.Receiver.Node != "" {
+		receiverMap := map[string]string {
+			"PodName": receiverPod,
+			"NodeName": podargs.Receiver.Node,
+			"ContainerImage": podargs.Image,
+			"IFName": podargs.IFName,
+			"EgressIP": podargs.Receiver.VxlanEgressIP,
+			"VXLANIP": podargs.Receiver.VxlanIP,
+			"VXLANID": strconv.Itoa(podargs.VxlanID),
+			"VXLANPort": strconv.Itoa(podargs.VxlanPort),
+		}
+
+		if err := kokoTapPodDockerReceiverTemplate.Execute(&yaml, receiverMap); err != nil {
+			panic(err)
+		}
+	}
+
+	return yaml.String()
 }
 
 func (podargs *kokotapPodArgs) GenerateCrioYaml() string {
 	senderPod, receiverPod := podargs.GeneratePodName()
-	kokoTapPodCrioSenderTemplate := `
+	kokoTapPodCrioSenderTemplate, _ := template.New("kokotapPodCrioSenderTemplate").Parse(`
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: %s
+  name: {{.PodName}}
 spec:
   hostNetwork: true
-  nodeName: %s
+  nodeName: {{.NodeName}}
   containers:
-    - name: %s
-      image: %s
+    - name: {{.PodName}}
+      image: {{.ContainerImage}}
       imagePullPolicy: Always
       command: ["/bin/kokotap_pod"]
-      args: ["--procprefix=/host", "mode", "sender", "--containerid=%s",
-             "--mirrortype=%s", "--mirrorif=%s", "--ifname=%s",
-             "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d",
-             "--vxlan-port=%d"]
+      args: ["--procprefix=/host", "mode", "sender", "--containerid={{.ContainerID}}",
+             "--mirrortype={{.MirrorType}}", "--mirrorif={{.MirrorIF}}", "--ifname={{.IFName}}",
+             "--vxlan-egressip={{.EgressIP}}", "--vxlan-ip={{.VXLANIP}}", "--vxlan-id={{.VXLANID}}",
+             "--vxlan-port={{.VXLANPort}}"]
       securityContext:
         privileged: true
       volumeMounts:
@@ -185,41 +216,67 @@ spec:
     - name: proc
       hostPath:
         path: /proc
-`
-	kokoTapPodCrioReceiverTemplate := `
+`)
+
+	kokoTapPodCrioReceiverTemplate, _ := template.New("kokotapPodCrioReceiverTemplate").Parse(`
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: %s
+  name: {{.PodName}}
 spec:
   hostNetwork: true
-  nodeName: %s
+  nodeName: {{.NodeName}}
   containers:
-    - name: %s
+    - name: {{.PodName}}
       imagePullPolicy: Always
-      image: %s
+      image: {{.ContainerImage}}
       command: ["/bin/kokotap_pod"]
       args: ["--procprefix=/host", "mode", "receiver",
-             "--ifname=%s", "--vxlan-egressip=%s", "--vxlan-ip=%s", "--vxlan-id=%d",
-             "--vxlan-port=%d"]
+             "--ifname={{.IFName}}", "--vxlan-egressip={{.EgressIP}}",
+             "--vxlan-ip={{.VXLANIP}}", "--vxlan-id={{.VXLANID}}",
+             "--vxlan-port={{.VXLANPort}}"]
       securityContext:
         privileged: true
-`
-	yaml := fmt.Sprintf(kokoTapPodCrioSenderTemplate,
-		senderPod, podargs.Sender.Node, senderPod, podargs.Image,
-		podargs.Sender.ContainerID,
-		podargs.Sender.MirrorType, podargs.Sender.MirrorIF, podargs.IFName,
-		podargs.Sender.VxlanEgressIP, podargs.Sender.VxlanIP, podargs.VxlanID, podargs.VxlanPort)
+`)
 
-	if podargs.Receiver.Node != "" {
-		yaml = yaml + fmt.Sprintf(kokoTapPodCrioReceiverTemplate,
-			receiverPod, podargs.Receiver.Node, receiverPod, podargs.Image,
-			podargs.IFName, podargs.Receiver.VxlanEgressIP, podargs.Receiver.VxlanIP,
-			podargs.VxlanID, podargs.VxlanPort)
+	senderMap := map[string]string {
+		"PodName": senderPod,
+		"NodeName": podargs.Sender.Node,
+		"ContainerImage": podargs.Image,
+		"ContainerID": podargs.Sender.ContainerID,
+		"MirrorType": podargs.Sender.MirrorType,
+		"MirrorIF": podargs.Sender.MirrorIF,
+		"IFName": podargs.IFName,
+		"EgressIP": podargs.Sender.VxlanEgressIP,
+		"VXLANIP": podargs.Sender.VxlanIP,
+		"VXLANID": strconv.Itoa(podargs.VxlanID),
+		"VXLANPort": strconv.Itoa(podargs.VxlanPort),
 	}
 
-	return yaml
+	var yaml bytes.Buffer
+	if err := kokoTapPodCrioSenderTemplate.Execute(&yaml, senderMap); err != nil {
+		panic(err)
+	}
+
+	if podargs.Receiver.Node != "" {
+		receiverMap := map[string]string {
+			"PodName": receiverPod,
+			"NodeName": podargs.Receiver.Node,
+			"ContainerImage": podargs.Image,
+			"IFName": podargs.IFName,
+			"EgressIP": podargs.Receiver.VxlanEgressIP,
+			"VXLANIP": podargs.Receiver.VxlanIP,
+			"VXLANID": strconv.Itoa(podargs.VxlanID),
+			"VXLANPort": strconv.Itoa(podargs.VxlanPort),
+		}
+
+		if err := kokoTapPodCrioReceiverTemplate.Execute(&yaml, receiverMap); err != nil {
+			panic(err)
+		}
+	}
+
+	return yaml.String()
 }
 
 func (podargs *kokotapPodArgs) ParseKokoTapArgs(args *kokotapArgs) error {
